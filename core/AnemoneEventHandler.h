@@ -1,3 +1,3 @@
 @protocol AnemoneEventHandler
--(void)reloadTheme;
+- (void)reloadTheme;
 @end

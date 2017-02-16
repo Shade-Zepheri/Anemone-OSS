@@ -1,6 +1,6 @@
 #import "core/ANEMSettingsManager.h"
-#import "common/CPDistributedMessagingCenter.h"
-#import "common/rocketbootstrap.h"
+#import <AppSupport/CPDistributedMessagingCenter.h>
+#import <rocketbootstrap/rocketbootstrap.h>
 #import <dlfcn.h>
 #import <objc/runtime.h>
 
@@ -46,7 +46,7 @@
 - (id)init {
 	dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib", RTLD_NOW);
 	self = [super init];
-	_server = [[objc_getClass("CPDistributedMessagingCenter") centerNamed:@"com.anemonetheming.anemone.springboard"] retain];
+	_server = [[%c("CPDistributedMessagingCenter") centerNamed:@"com.anemonetheming.anemone.springboard"] retain];
 	rocketbootstrap_distributedmessagingcenter_apply(_server);
 	[_server runServerOnCurrentThread];
 	[_server registerForMessageName:@"forceReloadNow" target:self selector:@selector(forceReloadNow)];

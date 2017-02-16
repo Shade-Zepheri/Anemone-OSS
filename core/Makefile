@@ -5,6 +5,7 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = AnemoneCore
 AnemoneCore_FILES = ANEMSettingsManager.mm Bundle.xm CGImage.xm
 AnemoneCore_FRAMEWORKS = CoreGraphics ImageIO
+AnemoneCore_PRIVATE_FRAMEWORKS = AppSupport
 ifeq ($(NO_OPTITHEME),1)
 	AnemoneCore_CFLAGS += -DNO_OPTITHEME
 else
