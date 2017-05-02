@@ -53,6 +53,10 @@ static NSMutableDictionary *cachedBundles = nil;
 		return self;
 	if ([self hasPrefix:@"/var/mobile/Library/Caches"])
 		return self;
+	if ([self hasSuffix:@".artwork"])
+		return self;
+	if ([self hasSuffix:@".car"])
+		return self;
 	self = [self stringByResolvingSymlinksInPath];
 	NSString *fileName = [self lastPathComponent];
 	NSArray *themes = [[ANEMSettingsManager sharedManager] themeSettings];
