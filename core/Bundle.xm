@@ -17,34 +17,39 @@ static NSMutableDictionary *cachedBundles = nil;
 @implementation NSBundle (Anemone)
 + (NSBundle *) anemoneBundleWithFile:(NSString *)path {
 	path = [path stringByDeletingLastPathComponent];
-	if (path == nil || [path length] == 0 || [path isEqualToString:@"/"])
+	if (!path || [path length] == 0 || [path isEqualToString:@"/"]) {
 		return nil;
+	}
 	NSBundle *bundle = nil;
-	if (!cachedBundles)
+	if (!cachedBundles) {
 		cachedBundles = [[NSMutableDictionary alloc] initWithCapacity:5];
+	}
 
 	bundle = [cachedBundles objectForKey:path];
-	if ((NSNull *)bundle == [NSNull null])
+	if ((NSNull *)bundle == [NSNull null]) {
 		return nil;
-	else if (bundle == nil){
-		if ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"Info.plist"]])
+	} else if (!bundle) {
+		if ([[NSFileManager defaultManager] fileExistsAtPath:[path stringByAppendingPathComponent:@"Info.plist"]]) {
 			bundle = [NSBundle bundleWithPath:path];
-		if (bundle == nil)
+		}
+		if (!bundle) {
 			bundle = [NSBundle anemoneBundleWithFile:path];
-		[cachedBundles setObject:(bundle == nil ? [NSNull null] : bundle) forKey:path];
+		}
+		[cachedBundles setObject:!bundle ? [NSNull null] : bundle forKey:path];
 	}
 	return bundle;
 }
 @end
 
 @implementation NSString (Anemone)
-- (NSString *) anemoneThemedPath {
+- (NSString *)anemoneThemedPath {
 	return [self anemoneThemedPath:NO];
 }
 
-- (NSString *) anemoneThemedPath:(BOOL)enableLegacy {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+- (NSString *)anemoneThemedPath:(BOOL)enableLegacy {
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return self;
+	}
 	NSString *themesDir = [[ANEMSettingsManager sharedManager] themesDir];
 
 	if ([self hasPrefix:@"/var/stash/anemonecache"])
@@ -57,38 +62,40 @@ static NSMutableDictionary *cachedBundles = nil;
 		return self;
 	if ([self hasSuffix:@".car"])
 		return self;
-	self = [self stringByResolvingSymlinksInPath];
-	NSString *fileName = [self lastPathComponent];
+	NSString *newSelf = [self stringByResolvingSymlinksInPath];
+	NSString *fileName = [newSelf lastPathComponent];
 	NSArray *themes = [[ANEMSettingsManager sharedManager] themeSettings];
 
-	NSBundle *bundle = [NSBundle anemoneBundleWithFile:self];
+	NSBundle *bundle = [NSBundle anemoneBundleWithFile:newSelf];
 	if ([[ANEMSettingsManager sharedManager] masksOnly]){
 		if (![[bundle bundleIdentifier] isEqualToString:@"com.apple.mobileicons.framework"]){
-			return self;
+			return newSelf;
 		}
 	}
 
 	NSString *fileEnding = fileName;
-	if (bundle){
+	if (bundle) {
 		NSString *prefix = [[bundle bundlePath] stringByResolvingSymlinksInPath];
-		if ([self hasPrefix:prefix])
-			fileEnding = [self substringFromIndex:[prefix length]+1];
+		if ([newSelf hasPrefix:prefix]) {
+			fileEnding = [newSelf substringFromIndex:[prefix length]+1];
+		}
 	}
 
 	BOOL useOptithemeInstead = NO;
 	#ifndef NO_OPTITHEME
-	if ([[ANEMSettingsManager sharedManager] optithemeEnabled]){
+	if ([[ANEMSettingsManager sharedManager] optithemeEnabled]) {
 		if (bundle){
 			NSString *cacheFolder = [@"/var/stash/anemonecache/" stringByAppendingPathComponent:[bundle bundleIdentifier]];
 			NSString *completeName = [cacheFolder stringByAppendingPathComponent:@".complete"];
 
-			if ([[NSFileManager defaultManager] fileExistsAtPath:completeName]){
+			if ([[NSFileManager defaultManager] fileExistsAtPath:completeName]) {
 				useOptithemeInstead = YES;
 				NSString *path = [NSString stringWithFormat:@"%@/%@",cacheFolder,fileEnding];
-				if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+				if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 					return path;
+				}
 
-				if (enableLegacy){
+				if (enableLegacy) {
 					size_t size;
 					sysctlbyname("hw.machine", NULL, &size, NULL, 0);
 					char *machine = (char *)malloc(size);
@@ -98,21 +105,24 @@ static NSMutableDictionary *cachedBundles = nil;
 
 					//this is slow and should be avoided
 					NSString *suffixToStrip = @"~iphone";
-					if ([platform rangeOfString:@"iPad"].location != NSNotFound)
+					if ([platform rangeOfString:@"iPad"].location != NSNotFound) {
 						suffixToStrip = @"~ipad";
-					if ([path rangeOfString:suffixToStrip].location != NSNotFound){
+					}
+					if ([path rangeOfString:suffixToStrip].location != NSNotFound) {
 						NSString *noSuffixPath = [path stringByReplacingOccurrencesOfString:suffixToStrip withString:@""];
-						if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath])
+						if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath]) {
 							return noSuffixPath;
+						}
 					} else {
 						NSString *suffixToAdd = [suffixToStrip stringByAppendingString:@".png"];
 						NSString *suffixedPath = [path stringByReplacingOccurrencesOfString:@".png" withString:suffixToAdd];
-						if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath])
+						if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath]) {
 							return suffixedPath;
+						}
 					}
 				}
 			} else {
-				if ([bundle bundlePath] != nil){
+				if ([bundle bundlePath]) {
 					dlopen("/System/Library/PrivateFrameworks/AppSupport.framework/AppSupport", RTLD_NOW);
 					CPDistributedMessagingCenter *client = [objc_getClass("CPDistributedMessagingCenter") centerNamed:@"com.anemonetheming.anemone.optitheme"];
 					rocketbootstrap_distributedmessagingcenter_apply(client);
@@ -124,16 +134,16 @@ static NSMutableDictionary *cachedBundles = nil;
 	}
 	#endif
 
-	NSString *folderName = [[self stringByDeletingLastPathComponent] lastPathComponent];
+	NSString *folderName = [[newSelf stringByDeletingLastPathComponent] lastPathComponent];
 
-	for (NSString *theme in themes)
-		{
-		if (bundle && !useOptithemeInstead){
+	for (NSString *theme in themes) {
+		if (bundle && !useOptithemeInstead) {
 			NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Bundles/%@/%@",themesDir,theme,bundle.bundleIdentifier,fileEnding];
-			if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+			if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 				return path;
+			}
 
-			if (enableLegacy){
+			if (enableLegacy) {
 				size_t size;
 				sysctlbyname("hw.machine", NULL, &size, NULL, 0);
 				char *machine = (char *)malloc(size);
@@ -143,27 +153,31 @@ static NSMutableDictionary *cachedBundles = nil;
 
 				//this is slow and should be avoided
 				NSString *suffixToStrip = @"~iphone";
-				if ([platform rangeOfString:@"iPad"].location != NSNotFound)
+				if ([platform rangeOfString:@"iPad"].location != NSNotFound) {
 					suffixToStrip = @"~ipad";
-				if ([path rangeOfString:suffixToStrip].location != NSNotFound){
+				}
+				if ([path rangeOfString:suffixToStrip].location != NSNotFound) {
 					NSString *noSuffixPath = [path stringByReplacingOccurrencesOfString:suffixToStrip withString:@""];
-					if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath])
+					if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath]) {
 						return noSuffixPath;
+					}
 				} else {
 					NSString *suffixToAdd = [suffixToStrip stringByAppendingString:@".png"];
 					NSString *suffixedPath = [path stringByReplacingOccurrencesOfString:@".png" withString:suffixToAdd];
-					if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath])
+					if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath]) {
 						return suffixedPath;
+					}
 				}
 			}
 
-			if (SupportsNoExtensionDir){
+			if (SupportsNoExtensionDir) {
 				path = [NSString stringWithFormat:@"%@/%@/Bundles/%@/%@",themesDir,theme,bundle.bundleIdentifier,fileEnding];
-				if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+				if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 					return path;
+				}
 			}
 
-			if (enableLegacy){
+			if (enableLegacy) {
 				size_t size;
 				sysctlbyname("hw.machine", NULL, &size, NULL, 0);
 				char *machine = (char *)malloc(size);
@@ -173,38 +187,45 @@ static NSMutableDictionary *cachedBundles = nil;
 
 				//this is slow and should be avoided
 				NSString *suffixToStrip = @"~iphone";
-				if ([platform rangeOfString:@"iPad"].location != NSNotFound)
+				if ([platform rangeOfString:@"iPad"].location != NSNotFound) {
 					suffixToStrip = @"~ipad";
-				if ([path rangeOfString:suffixToStrip].location != NSNotFound){
+				}
+				if ([path rangeOfString:suffixToStrip].location != NSNotFound) {
 					NSString *noSuffixPath = [path stringByReplacingOccurrencesOfString:suffixToStrip withString:@""];
-					if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath])
+					if ([[NSFileManager defaultManager] fileExistsAtPath:noSuffixPath]) {
 						return noSuffixPath;
+					}
 				} else {
 					NSString *suffixToAdd = [suffixToStrip stringByAppendingString:@".png"];
 					NSString *suffixedPath = [path stringByReplacingOccurrencesOfString:@".png" withString:suffixToAdd];
-					if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath])
+					if ([[NSFileManager defaultManager] fileExistsAtPath:suffixedPath]) {
 						return suffixedPath;
+					}
 				}
 			}
 		}
 		NSString *pathFolders = [NSString stringWithFormat:@"%@/%@.theme/Folders/%@/%@",themesDir,theme,folderName,fileName];
-		if ([[NSFileManager defaultManager] fileExistsAtPath:pathFolders])
+		if ([[NSFileManager defaultManager] fileExistsAtPath:pathFolders]) {
 			return pathFolders;
-		if (SupportsNoExtensionDir){
+		}
+		if (SupportsNoExtensionDir) {
 			pathFolders = [NSString stringWithFormat:@"%@/%@/Folders/%@/%@",themesDir,theme,folderName,fileName];
-			if ([[NSFileManager defaultManager] fileExistsAtPath:pathFolders])
+			if ([[NSFileManager defaultManager] fileExistsAtPath:pathFolders]) {
 				return pathFolders;
+			}
 		}
 		NSString *pathFallback = [NSString stringWithFormat:@"%@/%@.theme/Fallback/%@",themesDir,theme,fileName];
-		if ([[NSFileManager defaultManager] fileExistsAtPath:pathFallback])
+		if ([[NSFileManager defaultManager] fileExistsAtPath:pathFallback]) {
 			return pathFallback;
-		if (SupportsNoExtensionDir){
+		}
+		if (SupportsNoExtensionDir) {
 			pathFallback = [NSString stringWithFormat:@"%@/%@/Fallback/%@",themesDir,theme,fileName];
-			if ([[NSFileManager defaultManager] fileExistsAtPath:pathFallback])
+			if ([[NSFileManager defaultManager] fileExistsAtPath:pathFallback]) {
 				return pathFallback;
+			}
 		}
 	}
-	return self;
+	return newSelf;
 }
 @end
 
@@ -238,29 +259,32 @@ static NSMutableDictionary *cachedBundles = nil;
 }*/
 
 - (NSString *)pathForResource:(NSString *)resource ofType:(NSString *)type {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return %orig;
+	}
 	NSString *themesDir = [[ANEMSettingsManager sharedManager] themesDir];
 
 	NSString *fileName;
-	if (type != nil && [type length] != 0 && ![type isEqualToString:@""])
+	if (type && [type length] != 0 && ![type isEqualToString:@""]) {
 		fileName = [resource stringByAppendingFormat:@".%@",type];
-	else
+	} else {
 		fileName = resource;
+	}
 	NSArray *themes = [[ANEMSettingsManager sharedManager] themeSettings];
 
 	#ifndef NO_OPTITHEME
 	NSString *cacheFolder = [@"/var/stash/anemonecache/" stringByAppendingPathComponent:[self bundleIdentifier]];
 	NSString *completeName = [cacheFolder stringByAppendingPathComponent:@".complete"];
 
-	if ([[ANEMSettingsManager sharedManager] optithemeEnabled]){
+	if ([[ANEMSettingsManager sharedManager] optithemeEnabled]) {
 		if ([[NSFileManager defaultManager] fileExistsAtPath:completeName]){
 			//load optithemed image
 			NSString *path = [NSString stringWithFormat:@"%@/%@",cacheFolder,fileName];
-			if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+			if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 				return path;
+			}
 		} else {
-			if ([self bundlePath] != nil){
+			if ([self bundlePath]){
 				dlopen("/System/Library/PrivateFrameworks/AppSupport.framework/AppSupport", RTLD_NOW);
 				CPDistributedMessagingCenter *client = [objc_getClass("CPDistributedMessagingCenter") centerNamed:@"com.anemonetheming.anemone.optitheme"];
 				rocketbootstrap_distributedmessagingcenter_apply(client);
@@ -271,15 +295,16 @@ static NSMutableDictionary *cachedBundles = nil;
 	}
 	#endif
 
-	for (NSString *theme in themes)
-	{
+	for (NSString *theme in themes) {
 		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Bundles/%@/%@",themesDir,theme,self.bundleIdentifier,fileName];
-		if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 			return path;
-		if (SupportsNoExtensionDir){
+		}
+		if (SupportsNoExtensionDir) {
 			path = [NSString stringWithFormat:@"%@/%@/Bundles/%@/%@",themesDir,theme,self.bundleIdentifier,fileName];
-			if ([[NSFileManager defaultManager] fileExistsAtPath:path])
+			if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
 				return path;
+			}
 		}
 	}
 	return %orig;
@@ -288,7 +313,9 @@ static NSMutableDictionary *cachedBundles = nil;
 %end
 
 %ctor {
-	if (![[[NSBundle mainBundle] bundleIdentifier] isEqualToString:@"org.coolstar.anemone"]){
-		%init(BundleHook);
+	if (IN_BUNDLE(@"org.coolstar.anemone")) {
+		return;
 	}
+
+	%init(BundleHook);
 }

@@ -1,5 +1,6 @@
 #import "core/ANEMSettingsManager.h"
 #import "UIColor+HTMLColors.h"
+#import <version.h>
 
 static NSMutableDictionary *badgeSettings = nil;
 static BOOL badgeSettingsLoaded = NO;
@@ -17,26 +18,22 @@ static UIColor *badgeTextColor = nil;
 static UIColor *badgeTextShadowColor = nil;
 static NSString *badgeTextCase = nil;
 
-static void getBadgeSettings()
-{
+static void getBadgeSettings() {
 	badgeSettingsLoaded = YES;
 	NSArray *themes = [[%c(ANEMSettingsManager) sharedManager] themeSettings];
 	NSString *themesDir = [[%c(ANEMSettingsManager) sharedManager] themesDir];
 
-	for (NSString *theme in themes)
-	{
+	for (NSString *theme in themes) {
 		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Info.plist",themesDir,theme];
 		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:path]){
 			path = [NSString stringWithFormat:@"%@/%@/Info.plist",themesDir,theme];
 		}
 		NSDictionary *themeDict = [NSDictionary dictionaryWithContentsOfFile:path];
-		if (themeDict[@"BadgeSettings"] != nil)
-		{
+		if (themeDict[@"BadgeSettings"]) {
 			badgeSettings = [themeDict[@"BadgeSettings"] mutableCopy];
 			return;
 		}
-		if (themeDict[@"ThemeLib-BadgeSettings"] != nil)
-		{
+		if (themeDict[@"ThemeLib-BadgeSettings"]) {
 			badgeSettings = [themeDict[@"ThemeLib-BadgeSettings"] mutableCopy];
 			return;
 		}
@@ -44,17 +41,19 @@ static void getBadgeSettings()
 }
 
 static void loadBadgeSettings(){
-	if (badgeSettingsLoaded)
+	if (badgeSettingsLoaded) {
 		return;
+	}
 
-	[badgeTextCase release];
 	badgeTextCase = nil;
 
 	badgeFont = @"HelveticaNeue";
-	if (kCFCoreFoundationVersionNumber > 1240)
+	if (IS_IOS_OR_NEWER(iOS_9_0)) {
 		badgeFont = @".SFUIText-Regular";
-	if (kCFCoreFoundationVersionNumber > 1333)
+	}
+	if (IS_IOS_OR_NEWER(iOS_10_0)) {
 		badgeFont = @".SFUIText";
+	}
 
 	badgeTextColor = [UIColor whiteColor];
 	badgeTextShadowColor = [UIColor clearColor];
@@ -79,7 +78,7 @@ static void loadBadgeSettings(){
 		[badgeSettings setObject:badgeTextColor forKey:@"RawTextColor"];
 	}
 	if ([badgeSettings objectForKey:@"TextCase"])
-		badgeTextCase = [[[badgeSettings objectForKey:@"TextCase"] lowercaseString] retain];
+		badgeTextCase = [[badgeSettings objectForKey:@"TextCase"] lowercaseString];
 	if ([badgeSettings objectForKey:@"ShadowXoffset"])
 		badgeTextShadowXoffset = [[badgeSettings objectForKey:@"ShadowXoffset"] floatValue];
 	if ([badgeSettings objectForKey:@"ShadowYoffset"])
@@ -119,12 +118,8 @@ static void loadBadgeSettings(){
 
 	badgeTextShadowColor = nil;
 
-	if (badgeTextCase)
-		[badgeTextCase release];
 	badgeTextCase = nil;
 
-	if (badgeSettings)
-		[badgeSettings release];
 	badgeSettings = nil;
 	badgeSettingsLoaded = NO;
 
@@ -136,6 +131,12 @@ static void loadBadgeSettings(){
 @property (nonatomic, retain) UIImage *image;
 @end
 
+@interface SBIconView : UIView {
+	UIView *_accessoryView;
+}
+@end
+
+
 @interface SBIconBadgeView : UIView
 + (SBIconAccessoryImage *)_checkoutBackgroundImage;
 - (void)prepareForReuse;
@@ -145,18 +146,20 @@ static void loadBadgeSettings(){
 - (void)prepareForReuse {
 	%orig;
 	SBIconBadgeView *badgeView = [self valueForKey:@"_accessoryView"];
-	if ([badgeView respondsToSelector:@selector(prepareForReuse)])
+	if ([badgeView respondsToSelector:@selector(prepareForReuse)]) {
 		[badgeView prepareForReuse];
+	}
 }
 %end
 
 %hook SBIconBadgeView
 
 + (SBIconAccessoryImage *)_checkoutBackgroundImage {
-	if ([UIImage imageNamed:@"SBBadgeBG.png"])
-		return [[[%c(SBIconAccessoryImage) alloc] initWithImage:[UIImage imageNamed:@"SBBadgeBG.png"]] autorelease];
-	else
+	if ([UIImage imageNamed:@"SBBadgeBG.png"]) {
+		return [[%c(SBIconAccessoryImage) alloc] initWithImage:[UIImage imageNamed:@"SBBadgeBG.png"]];
+	} else {
 		return %orig;
+	}
 }
 
 + (SBIconAccessoryImage *)_checkoutImageForText:(NSString *)text highlighted:(BOOL)highlighted {
@@ -164,47 +167,52 @@ static void loadBadgeSettings(){
 
 	UIFont *font = [UIFont fontWithName:badgeFont size:badgeFontSize];
 	CGSize size = [text sizeWithAttributes:@{NSFontAttributeName:font}];
-	if (size.height != 0)
+	if (size.height != 0) {
 		size.height += badgeHeightChange;
-	if (size.width != 0)
+	}
+	if (size.width != 0) {
 		size.width += badgeWidthChange;
-	if (size.width == 0 || size.height == 0)
+	}
+	if (size.width == 0 || size.height == 0) {
 		return %orig;
-	UIGraphicsBeginImageContextWithOptions(size, NO, 0.0);
+	}
+	UIGraphicsBeginImageContextWithOptions(size, YES, 0.0);
 	CGContextRef ctx = UIGraphicsGetCurrentContext();
 	CGContextSetShadowWithColor(ctx, CGSizeMake(badgeTextShadowXoffset,badgeTextShadowYoffset), badgeTextShadowBlurRadius, badgeTextShadowColor.CGColor);
-	
-	if ([badgeTextCase isEqualToString:@"lowercase"])
+
+	if ([badgeTextCase isEqualToString:@"lowercase"]) {
 		text = [text lowercaseString];
-	else if ([badgeTextCase isEqualToString:@"uppercase"])
+	} else if ([badgeTextCase isEqualToString:@"uppercase"]) {
 		text = [text uppercaseString];
+	}
 
 	[text drawAtPoint:CGPointMake(badgeXoffset,badgeYoffset) withAttributes:@{NSFontAttributeName:font, NSForegroundColorAttributeName:badgeTextColor}];
 	UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
-	return [[[%c(SBIconAccessoryImage) alloc] initWithImage:image] autorelease];
+	return [[%c(SBIconAccessoryImage) alloc] initWithImage:image];
 }
 
 - (void)prepareForReuse {
 	%orig;
-	
-	BOOL isiOS70 = (kCFCoreFoundationVersionNumber < 847.24);
+
+	BOOL isiOS70 = IS_IOS_OR_NEWER(iOS_7_0_3);
 
 	SBDarkeningImageView *backgroundView = [self valueForKey:@"_backgroundView"];
 
 	SBIconAccessoryImage *backgroundImage = [%c(SBIconBadgeView) _checkoutBackgroundImage];
-	
+
 	UIImage *currentBackgroundImage = backgroundView.image;
-	if (isiOS70)
+	if (isiOS70) {
 		currentBackgroundImage = [self valueForKey:@"_backgroundImage"];
-	else
+	} else {
 		currentBackgroundImage = backgroundView.image;
+	}
 
 	[self setValue:backgroundImage forKey:@"_backgroundImage"];
 
-	if (isiOS70)
+	if (isiOS70) {
 		backgroundView.image = backgroundImage;
-	else {
+	} else {
 		UIEdgeInsets capInsets = currentBackgroundImage.capInsets;
 		backgroundView.image = [backgroundImage resizableImageWithCapInsets:capInsets];
 	}
@@ -213,9 +221,10 @@ static void loadBadgeSettings(){
 %end
 
 %ctor {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return;
-	if (objc_getClass("ANEMSettingsManager") == nil){
+	}
+	if (!%c(ANEMSettingsManager)){
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemoneBadgesEventHandler new]];

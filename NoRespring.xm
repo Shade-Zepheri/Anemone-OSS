@@ -43,10 +43,10 @@
 @end
 
 @implementation AnemoneNoRespringServer
-- (id)init {
+- (instancetype)init {
 	dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib", RTLD_NOW);
 	self = [super init];
-	_server = [[%c("CPDistributedMessagingCenter") centerNamed:@"com.anemonetheming.anemone.springboard"] retain];
+	_server = [%c(CPDistributedMessagingCenter) centerNamed:@"com.anemonetheming.anemone.springboard"];
 	rocketbootstrap_distributedmessagingcenter_apply(_server);
 	[_server runServerOnCurrentThread];
 	[_server registerForMessageName:@"forceReloadNow" target:self selector:@selector(forceReloadNow)];
@@ -79,23 +79,24 @@
 	[[rootFolderView currentIconListView] showAllIcons];
 
 	SBIconListPageControl *pageControl = [rootFolderView valueForKey:@"_pageControl"];
-	if ([pageControl respondsToSelector:@selector(reloadAllDots)])
+	if ([pageControl respondsToSelector:@selector(reloadAllDots)]) {
 		[pageControl reloadAllDots];
+	}
 
 	NSUInteger listViewCount = [rootFolderView iconListViewCount];
 	NSUInteger currentPageIndex = [rootFolderView currentPageIndex];
 	NSArray *iconLists = [rootFolderView iconListViews];
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-		if (currentPageIndex < listViewCount-1){
+		if (currentPageIndex < listViewCount-1) {
 			SBIconListView *iconListView = [iconLists objectAtIndex:currentPageIndex+1];
 			for (SBIconView *iconView in [iconListView subviews]){
 				[iconView prepareForReuse];
 			}
 			[iconListView showAllIcons];
 		}
-		if (currentPageIndex > 0){
+		if (currentPageIndex > 0) {
 			SBIconListView *iconListView = [iconLists objectAtIndex:currentPageIndex-1];
-			for (SBIconView *iconView in [iconListView subviews]){
+			for (SBIconView *iconView in [iconListView subviews]) {
 				[iconView prepareForReuse];
 			}
 			[iconListView showAllIcons];
@@ -107,13 +108,17 @@
 }
 @end
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-value"
 %hook SpringBoard
--(id)init {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+-(instancetype)init {
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return %orig;
+	}
 	self = %orig;
 	dlopen("/System/Library/PrivateFrameworks/AppSupport.framework/AppSupport", RTLD_NOW);
 	[[AnemoneNoRespringServer alloc] init];
 	return self;
 }
 %end
+#pragma clang diagnostic pop

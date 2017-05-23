@@ -1,7 +1,7 @@
 #import "ANEMSettingsManager.h"
 #import <objc/runtime.h>
 
-#pragma clang diagnostic push 
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wambiguous-macro"
 #if TARGET_IPHONE_SIMULATOR
 #define HOMEDIR NSHomeDirectory()
@@ -19,7 +19,7 @@
 - (void)recycleAndPurgeAll;
 @end
 
-@interface SBIconController : NSObject 
+@interface SBIconController : NSObject
 + (instancetype)sharedInstance;
 - (SBIconViewMap *)homescreenIconViewMap;
 @end
@@ -27,14 +27,15 @@
 @implementation ANEMSettingsManager
 - (instancetype)init {
 	self = [super init];
-	if (self){
+	if (self) {
 		_CGImageHookEnabled = YES;
 	}
+
 	return self;
 }
 
 + (instancetype)sharedManager {
-	static ANEMSettingsManager *sharedInstance;
+	static ANEMSettingsManager *sharedInstance = nil;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		sharedInstance = [[self alloc] init];
@@ -44,28 +45,26 @@
 }
 
 - (NSString *)themesDir {
-#pragma clang diagnostic push 
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wambiguous-macro"
 #if TARGET_IPHONE_SIMULATOR
-	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
+	if (IS_IPAD) {
 		return @"/Library/Themes/iPad";
-	else
+	} else {
 		return @"/Library/Themes/iPhone";
+	}
 #endif
 #pragma clang diagnostic pop
 	return @"/Library/Themes";
 }
 
 - (void)forceReloadNow {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return;
-	if (_themeSettings)
-		[_themeSettings release];
+	}
 	_themeSettings = nil;
 
 #ifndef NO_OPTITHEME
-	if (_optiThemeReloadDate)
-		[_optiThemeReloadDate release];
 	_optiThemeReloadDate = nil;
 #endif
 
@@ -76,10 +75,11 @@
 
 	SBIconController *iconController = [objc_getClass("SBIconController") sharedInstance];
 	SBIconViewMap *map = nil;
-	if ([iconController respondsToSelector:@selector(homescreenIconViewMap)])
+	if ([iconController respondsToSelector:@selector(homescreenIconViewMap)]) {
 		map = [iconController homescreenIconViewMap];
-	else
+	} else {
 		map = [objc_getClass("SBIconViewMap") homescreenMap];
+	}
 	[map recycleAndPurgeAll];
 }
 
@@ -118,16 +118,18 @@
 #endif
 
 - (void)addEventHandler:(NSObject<AnemoneEventHandler> *)handler {
-	if (!_eventHandlers){
+	if (!_eventHandlers) {
 		_eventHandlers = [[NSMutableArray alloc] init];
 	}
+
 	[_eventHandlers addObject:handler];
 }
 
 - (NSArray *)themeSettings {
-	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion)
+	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return nil;
-	if (!_themeSettings){
+	}
+	if (!_themeSettings) {
 		NSDictionary *settingsPlist = [NSDictionary dictionaryWithContentsOfFile:preferenceFilePath];
 		NSMutableArray *rawthemes = [NSMutableArray arrayWithContentsOfFile:preferenceOrderingFilePath];
 		NSMutableArray *themes = nil;
@@ -137,8 +139,9 @@
 				[themes addObject:[[theme componentsSeparatedByString:@".theme"] objectAtIndex:0]];
 			}
 		}
-		if (!themes)
+		if (!themes) {
 			themes = (NSMutableArray *)[settingsPlist allKeys];
+		}
 		NSMutableArray *themeSettings = [[NSMutableArray alloc] init];
 		for (NSString *themeName in themes) {
 			BOOL activeTheme = [[[settingsPlist objectForKey:themeName] objectForKey:@"Enabled"] boolValue];
@@ -152,7 +155,7 @@
 		_optithemeEnabled = YES;
 		NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:optiThemeTouchFilePath error:nil];
 		NSDate *date = [attributes fileModificationDate];
-		_optiThemeReloadDate = [date retain];
+		_optiThemeReloadDate = date;
 #endif
 	}
 	return _themeSettings;

@@ -20,25 +20,27 @@ static UIImage *currentSpotlightPageDotImage;
 static UIImage *spotlightPageDotImage;
 
 static void loadPageDotImages(){
-	if (pageDotImagesLoaded)
+	if (pageDotImagesLoaded) {
 		return;
+	}
 	pageDotImagesLoaded = YES;
 	NSArray *themes = [[%c(ANEMSettingsManager) sharedManager] themeSettings];
 	NSString *themesDir = [[%c(ANEMSettingsManager) sharedManager] themesDir];
 
-	for (NSString *theme in themes)
-	{
+	for (NSString *theme in themes) {
 		NSString *themePath = [NSString stringWithFormat:@"%@/%@.theme",themesDir,theme];
 		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:themePath]){
 			themePath = [NSString stringWithFormat:@"%@/%@",themesDir,theme];
 		}
 		NSString *dotCurrentPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Dot_CurrentSB.png", themePath];
-		if (!currentPageDotImage)
+		if (!currentPageDotImage) {
 			currentPageDotImage = [UIImage imageWithContentsOfFile:dotCurrentPath];
+		}
 
 		dotCurrentPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Dot_Current.png", themePath];
-		if (!currentPageDotImage)
+		if (!currentPageDotImage) {
 			currentPageDotImage = [UIImage imageWithContentsOfFile:dotCurrentPath];
+		}
 
 #if LegacyMagicDotsSupport
 		if (!currentPageDotImage){
@@ -46,18 +48,21 @@ static void loadPageDotImages(){
 			currentPageDotImage = [UIImage imageWithContentsOfFile:dotCurrentPath];
 
 			dotCurrentPath = [NSString stringWithFormat:@"%@/Bundles/com.magicdots.images/Dot_Current.png", themePath];
-			if (!currentPageDotImage)
+			if (!currentPageDotImage) {
 				currentPageDotImage = [UIImage imageWithContentsOfFile:dotCurrentPath];
+			}
 		}
 #endif
 
 		NSString *dotPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Dot_PagesSB.png", themePath];
-		if (!pageDotImage)
+		if (!pageDotImage) {
 			pageDotImage = [UIImage imageWithContentsOfFile:dotPath];
+		}
 
 		dotPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Dot_Pages.png", themePath];
-		if (!pageDotImage)
+		if (!pageDotImage) {
 			pageDotImage = [UIImage imageWithContentsOfFile:dotPath];
+		}
 
 #if LegacyMagicDotsSupport
 		if (!pageDotImage){
@@ -65,64 +70,70 @@ static void loadPageDotImages(){
 			pageDotImage = [UIImage imageWithContentsOfFile:dotPath];
 
 			dotPath = [NSString stringWithFormat:@"%@/Bundles/com.magicdots.images/Dot_Pages.png", themePath];
-			if (!pageDotImage)
+			if (!pageDotImage) {
 				pageDotImage = [UIImage imageWithContentsOfFile:dotPath];
+			}
 		}
 #endif
 
 		NSString *spotlightCurrentPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Spotlight_Current.png", themePath];
-		if (!currentSpotlightPageDotImage)
+		if (!currentSpotlightPageDotImage) {
 			currentSpotlightPageDotImage = [UIImage imageWithContentsOfFile:spotlightCurrentPath];
+		}
 
 		NSString *spotlightPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Spotlight_Pages.png", themePath];
-		if (!spotlightPageDotImage)
+		if (!spotlightPageDotImage) {
 			spotlightPageDotImage = [UIImage imageWithContentsOfFile:spotlightPath];
+		}
 
-		if (currentPageDotImage && pageDotImage && spotlightPageDotImage && currentSpotlightPageDotImage)
+		if (currentPageDotImage && pageDotImage && spotlightPageDotImage && currentSpotlightPageDotImage) {
 			break;
+		}
 	}
-	[currentPageDotImage retain];
-	[pageDotImage retain];
-	[spotlightPageDotImage retain];
-	[currentSpotlightPageDotImage retain];
 }
 
 %hook SBIconListPageControl
-%new;
-- (void)ANEMsetPageDotEnabled:(_UILegibilityView *)image enabled:(BOOL)enabled index:(long long)index {
+%new - (void)ANEMsetPageDotEnabled:(_UILegibilityView *)image enabled:(BOOL)enabled index:(long long)index {
 	loadPageDotImages();
 
-	if (![image respondsToSelector:@selector(imageView)])
+	if (![image respondsToSelector:@selector(imageView)]) {
 		return;
+	}
 
 	UIImageView *imageView = [image imageView];
 
 	CGSize pageDotSize = currentPageDotImage.size;
-	if (!currentPageDotImage)
+	if (!currentPageDotImage) {
 		pageDotSize = imageView.frame.size;
+	}
 
 	CGRect imageFrame = CGRectMake(0,0,pageDotSize.width, pageDotSize.height);
 	imageView.frame = imageFrame;
 
 	BOOL showSearchIndicator = NO;
-	if ([self respondsToSelector:@selector(shouldShowSearchIndicator)])
+	if ([self respondsToSelector:@selector(shouldShowSearchIndicator)]) {
 		showSearchIndicator = [self shouldShowSearchIndicator];
+	}
 
 	BOOL isSearchIndicator = NO;
-	if (showSearchIndicator && index == 0)
+	if (showSearchIndicator && index == 0) {
 		isSearchIndicator = YES;
+	}
 
-	if (currentPageDotImage){
-		if (enabled)
-			if (isSearchIndicator)
+	if (currentPageDotImage) {
+		if (enabled) {
+			if (isSearchIndicator) {
 				[imageView setImage:currentSpotlightPageDotImage];
-			else
+			} else {
 				[imageView setImage:currentPageDotImage];
-		else
-			if (isSearchIndicator)
+			}
+		} else {
+			if (isSearchIndicator) {
 				[imageView setImage:spotlightPageDotImage];
-			else
+			} else {
 				[imageView setImage:pageDotImage];
+			}
+		}
 	}
 }
 
@@ -136,18 +147,18 @@ static void loadPageDotImages(){
 	[self ANEMsetPageDotEnabled:image enabled:enabled index:index];
 }
 
-%new;
-- (void)reloadAllDots {
+%new - (void)reloadAllDots {
 	loadPageDotImages();
 
 	NSArray *indicators = [self valueForKey:@"_indicators"];
 
 	NSUInteger index = 0;
-	for (_UILegibilityView *image in indicators){
-		if ([self respondsToSelector:@selector(_setIndicatorImage:toEnabled:index:)])
+	for (_UILegibilityView *image in indicators) {
+		if ([self respondsToSelector:@selector(_setIndicatorImage:toEnabled:index:)]) {
 			[self _setIndicatorImage:image toEnabled:(index == [self currentPage]) index:index];
-		else
+		} else {
 			[self _setIndicatorImage:image toEnabled:(index == [self currentPage])];
+		}
 		index++;
 	}
 	[self layoutSubviews];
@@ -157,9 +168,10 @@ static void loadPageDotImages(){
 	%orig;
 	loadPageDotImages();
 
-	if (!currentPageDotImage)
+	if (!currentPageDotImage) {
 		return;
-	
+	}
+
 	CGSize pageDotSize = currentPageDotImage.size;
 
 	NSArray *indicators = [self valueForKey:@"_indicators"];
@@ -187,23 +199,19 @@ static void loadPageDotImages(){
 
 @implementation AnemonePageDotsEventHandler
 - (void)reloadTheme {
-	if (currentPageDotImage){
-		[currentPageDotImage release];
+	if (currentPageDotImage) {
 		currentPageDotImage = nil;
 	}
 
-	if (pageDotImage){
-		[pageDotImage release];
+	if (pageDotImage) {
 		pageDotImage = nil;
 	}
 
-	if (currentSpotlightPageDotImage){
-		[currentSpotlightPageDotImage release];
+	if (currentSpotlightPageDotImage) {
 		currentSpotlightPageDotImage = nil;
 	}
 
-	if (spotlightPageDotImage){
-		[spotlightPageDotImage release];
+	if (spotlightPageDotImage) {
 		spotlightPageDotImage = nil;
 	}
 
@@ -214,7 +222,7 @@ static void loadPageDotImages(){
 @end
 
 %ctor {
-	if (objc_getClass("ANEMSettingsManager") == nil){
+	if (!%c(ANEMSettingsManager)) {
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemonePageDotsEventHandler new]];

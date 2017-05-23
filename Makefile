@@ -1,13 +1,13 @@
-THEOS_PACKAGE_DIR_NAME = debs
-TARGET = iphone:clang:9.3:6.0
-ARCHS = armv7 arm64
+export TARGET = iphone:clang:9.3:6.0
+
+CFLAGS = -fobjc-arc
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = Anemone
-Anemone_FILES = Badges.xm Clock.xm Calendar.xm PageDots.xm NoRespring.xm
+Anemone_FILES = $(wildcard *.xm)
 Anemone_FRAMEWORKS = UIKit CoreGraphics QuartzCore
-Anemone_PRIVATE_FRAMEWORKS = AppSupport 
+Anemone_PRIVATE_FRAMEWORKS = AppSupport
 ifeq ($(NO_OPTITHEME),1)
 	Anemone_CFLAGS += -DNO_OPTITHEME
 endif
