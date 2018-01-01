@@ -3,11 +3,11 @@
 @end
 
 @interface LSApplicationProxy : LSResourceProxy
-+ (LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)arg1;
+@property (nonatomic, retain) NSString *applicationIdentifier;
+@property (nonatomic, retain) NSString *localizedName;
++ (LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)identifier;
 - (NSURL *)bundleURL;
 - (id)_plistValueForKey:(NSString *)key;
-- (NSString *)applicationIdentifier;
-- (NSString *)localizedName;
 - (BOOL)iconIsPrerendered;
 @end
 
