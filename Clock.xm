@@ -25,8 +25,9 @@ static BOOL clockImagesLoaded = NO;
 static BOOL clockIconNeedsUpdate = NO;
 
 static void loadClockImages(){
-	if (clockImagesLoaded)
+	if (clockImagesLoaded) {
 		return;
+	}
 
 	hourHandImage = [UIImage imageNamed:@"ClockIconHourHand"];
 	minuteHandImage = [UIImage imageNamed:@"ClockIconHourHand"];
@@ -100,38 +101,38 @@ static void loadClockImages(){
 	CALayer *blackDot = [self valueForKey:@"_blackDot"];
 	if (hourHandImage) {
 		hours.contents = (id)hourHandImage.CGImage;
-		hours.backgroundColor = [[UIColor clearColor] CGColor];
+		hours.backgroundColor = [UIColor clearColor].CGColor;
 	} else {
 		hours.contents = nil;
-		hours.backgroundColor = [hourHandColor CGColor];
+		hours.backgroundColor = hourHandColor.CGColor;
 	}
 	if (minuteHandImage) {
 		minutes.contents = (id)minuteHandImage.CGImage;
-		minutes.backgroundColor = [[UIColor clearColor] CGColor];
+		minutes.backgroundColor = [UIColor clearColor].CGColor;
 	} else {
 		minutes.contents = nil;
-		minutes.backgroundColor = [minuteHandColor CGColor];
+		minutes.backgroundColor = minuteHandColor.CGColor;
 	}
 	if (secondHandImage) {
 		seconds.contents = (id)secondHandImage.CGImage;
-		seconds.backgroundColor = [[UIColor clearColor] CGColor];
+		seconds.backgroundColor = [UIColor clearColor].CGColor;
 	} else {
 		seconds.contents = nil;
-		seconds.backgroundColor = [secondHandColor CGColor];
+		seconds.backgroundColor = secondHandColor.CGColor;
 	}
 	if (redDotImage) {
 		redDot.contents = (id)redDotImage.CGImage;
-		redDot.backgroundColor = [[UIColor clearColor] CGColor];
+		redDot.backgroundColor = [UIColor clearColor].CGColor;
 	} else {
 		redDot.contents = nil;
-		redDot.backgroundColor = [redDotColor CGColor];
+		redDot.backgroundColor = redDotColor.CGColor;
 	}
 	if (blackDotImage) {
 		blackDot.contents = (id)blackDotImage.CGImage;
-		blackDot.backgroundColor = [[UIColor clearColor] CGColor];
+		blackDot.backgroundColor = [UIColor clearColor].CGColor;
 	} else {
 		blackDot.contents = nil;
-		blackDot.backgroundColor = [blackDotColor CGColor];
+		blackDot.backgroundColor = blackDotColor.CGColor;
 	}
 
 	clockIconNeedsUpdate = NO;
@@ -164,7 +165,7 @@ static void loadClockImages(){
 
 	CGSize imageSize = CGSizeMake(60, 60);
 	if (IS_IPAD) {
-		if (MAX([[UIScreen mainScreen] bounds].size.width, [[UIScreen mainScreen] bounds].size.height) == 1366) { //iPad Pro
+		if (MAX(CGRectGetWidth([UIScreen mainScreen].bounds), CGRectGetHeight([UIScreen mainScreen].bounds)) == 1366) { //iPad Pro
 			imageSize = CGSizeMake(83.5, 83.5);
 		} else {
 			imageSize = CGSizeMake(76, 76);
@@ -178,11 +179,11 @@ static void loadClockImages(){
 	if (ret) {
 		UIImage *maskImage = nil;
 		NSBundle *mobileIconsBundle = [NSBundle bundleWithIdentifier:@"com.apple.mobileicons.framework"];
-		if ([[UIDevice currentDevice] userInterfaceIdiom] != UIUserInterfaceIdiomPad) {
+		if (!IS_IPAD) {
 			maskImage = [UIImage imageNamed:@"AppIconMask~iphone" inBundle:mobileIconsBundle];
 		} else {
 			maskImage = [UIImage imageNamed:@"AppIconMask~ipad" inBundle:mobileIconsBundle];
-			if (MAX([[UIScreen mainScreen] bounds].size.width, [[UIScreen mainScreen] bounds].size.height) == 1366) {
+			if (MAX(CGRectGetWidth([UIScreen mainScreen].bounds), CGRectGetHeight([UIScreen mainScreen].bounds)) == 1366) {
 				maskImage = [UIImage imageNamed:@"AppIconMask-RFB~ipad" inBundle:mobileIconsBundle];
 			}
 		}
@@ -236,9 +237,12 @@ static void loadClockImages(){
 	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return;
 	}
+
 	%init(all);
+
 	if (!%c(ANEMSettingsManager)) {
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
+
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemoneClockEventHandler new]];
 }

@@ -3,13 +3,12 @@ CFLAGS = -fobjc-arc
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = AnemoneCore
-AnemoneCore_FILES = ANEMSettingsManager.mm Bundle.xm CGImage.xm
+AnemoneCore_FILES = ANEMSettingsManager.m Bundle.x CGImage.xm
 AnemoneCore_FRAMEWORKS = CoreGraphics ImageIO
-AnemoneCore_PRIVATE_FRAMEWORKS = AppSupport
 ifeq ($(NO_OPTITHEME),1)
 	AnemoneCore_CFLAGS += -DNO_OPTITHEME
 else
-	AnemoneCore_FILES += OptithemeCheck.xm
+	AnemoneCore_FILES += OptithemeCheck.x
 endif
 ifeq ($(NO_SUBSTRATE),1)
 	AnemoneCore_FILES += ../common/fishhook/fishhook.c

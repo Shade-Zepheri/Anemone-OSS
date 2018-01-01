@@ -44,8 +44,8 @@ static void getCalendarSettings(){
 	NSString *themesDir = [[%c(ANEMSettingsManager) sharedManager] themesDir];
 
 	for (NSString *theme in themes) {
-		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Info.plist",themesDir,theme];
-		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:path]){
+		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Info.plist", themesDir, theme];
+		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:path]) {
 			path = [NSString stringWithFormat:@"%@/%@/Info.plist",themesDir,theme];
 		}
 		NSDictionary *themeDict = [NSDictionary dictionaryWithContentsOfFile:path];
@@ -60,7 +60,7 @@ static void getCalendarSettings(){
 			daySettings = nil;
 
 			if (!themesToShame) {
-				themesToShame = [[NSMutableArray alloc] init];
+				themesToShame = [NSMutableArray array];
 			}
 			[themesToShame addObject:theme];
 		}
@@ -194,9 +194,9 @@ static void loadCalendarSettings(){
 	NSString *day = [dateFormatter stringFromDate:date];
 
 	if ([dateTextCase isEqualToString:@"lowercase"]) {
-		day = [day lowercaseString];
+		day = day.lowercaseString;
 	} else if ([dateTextCase isEqualToString:@"uppercase"]) {
-		day = [day uppercaseString];
+		day = day.uppercaseString;
 	}
 
 	UIFont *numberFont = [UIFont fontWithName:dateFont size:dateFontSize];
@@ -221,9 +221,9 @@ static void loadCalendarSettings(){
 	NSString *dayOfWeek = [dateFormatter stringFromDate:date];
 
 	if ([dayTextCase isEqualToString:@"lowercase"]) {
-		dayOfWeek = [dayOfWeek lowercaseString];
+		dayOfWeek = dayOfWeek.lowercaseString;
 	} else if ([dayTextCase isEqualToString:@"uppercase"]) {
-		dayOfWeek = [dayOfWeek uppercaseString];
+		dayOfWeek = dayOfWeek.uppercaseString;
 	}
 
 	UIFont *dayOfWeekFont = [UIFont fontWithName:dayFont size:dayFontSize];
@@ -244,15 +244,12 @@ static void loadCalendarSettings(){
 	if (!themesToShame) {
 		return;
 	}
+
 	NSString *themesToShameString = [themesToShame componentsJoinedByString:@","];
 	NSString *messageString = [NSString stringWithFormat:@"The following theme(s) have bad Calendar icon settings in their Info.plist file: %@. Their calendar settings have been disabled. Please contact the theme designer to fix it. You may delete their Info.plist files (or disable the themes) to remove this error message.",themesToShameString];
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-	UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Crash Prevented"
-		message:messageString
-		delegate:nil
-		cancelButtonTitle:@"Ok"
-		otherButtonTitles:nil];
+	UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Crash Prevented" message:messageString delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil];
 	[alert show];
 #pragma clang diagnostic pop
 }
@@ -278,8 +275,10 @@ static void loadCalendarSettings(){
 	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return;
 	}
+
 	if (!%c(ANEMSettingsManager)) {
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
+
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemoneCalendarIconEventHandler new]];
 }

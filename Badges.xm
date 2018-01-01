@@ -24,9 +24,9 @@ static void getBadgeSettings() {
 	NSString *themesDir = [[%c(ANEMSettingsManager) sharedManager] themesDir];
 
 	for (NSString *theme in themes) {
-		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Info.plist",themesDir,theme];
-		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:path]){
-			path = [NSString stringWithFormat:@"%@/%@/Info.plist",themesDir,theme];
+		NSString *path = [NSString stringWithFormat:@"%@/%@.theme/Info.plist", themesDir, theme];
+		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+			path = [NSString stringWithFormat:@"%@/%@/Info.plist", themesDir, theme];
 		}
 		NSDictionary *themeDict = [NSDictionary dictionaryWithContentsOfFile:path];
 		if (themeDict[@"BadgeSettings"]) {
@@ -40,7 +40,7 @@ static void getBadgeSettings() {
 	}
 }
 
-static void loadBadgeSettings(){
+static void loadBadgeSettings() {
 	if (badgeSettingsLoaded) {
 		return;
 	}
@@ -181,9 +181,9 @@ static void loadBadgeSettings(){
 	CGContextSetShadowWithColor(ctx, CGSizeMake(badgeTextShadowXoffset,badgeTextShadowYoffset), badgeTextShadowBlurRadius, badgeTextShadowColor.CGColor);
 
 	if ([badgeTextCase isEqualToString:@"lowercase"]) {
-		text = [text lowercaseString];
+		text = text.lowercaseString;
 	} else if ([badgeTextCase isEqualToString:@"uppercase"]) {
-		text = [text uppercaseString];
+		text = text.uppercaseString;
 	}
 
 	[text drawAtPoint:CGPointMake(badgeXoffset,badgeYoffset) withAttributes:@{NSFontAttributeName:font, NSForegroundColorAttributeName:badgeTextColor}];
@@ -224,8 +224,10 @@ static void loadBadgeSettings(){
 	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return;
 	}
+
 	if (!%c(ANEMSettingsManager)){
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
+
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemoneBadgesEventHandler new]];
 }

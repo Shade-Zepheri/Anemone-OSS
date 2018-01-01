@@ -23,14 +23,15 @@ static void loadPageDotImages(){
 	if (pageDotImagesLoaded) {
 		return;
 	}
+
 	pageDotImagesLoaded = YES;
 	NSArray *themes = [[%c(ANEMSettingsManager) sharedManager] themeSettings];
 	NSString *themesDir = [[%c(ANEMSettingsManager) sharedManager] themesDir];
 
 	for (NSString *theme in themes) {
-		NSString *themePath = [NSString stringWithFormat:@"%@/%@.theme",themesDir,theme];
+		NSString *themePath = [NSString stringWithFormat:@"%@/%@.theme", themesDir, theme];
 		if (SupportsNoExtensionDir && ![[NSFileManager defaultManager] fileExistsAtPath:themePath]){
-			themePath = [NSString stringWithFormat:@"%@/%@",themesDir,theme];
+			themePath = [NSString stringWithFormat:@"%@/%@", themesDir, theme];
 		}
 		NSString *dotCurrentPath = [NSString stringWithFormat:@"%@/ANEMPageDots/Dot_CurrentSB.png", themePath];
 		if (!currentPageDotImage) {
@@ -43,7 +44,7 @@ static void loadPageDotImages(){
 		}
 
 #if LegacyMagicDotsSupport
-		if (!currentPageDotImage){
+		if (!currentPageDotImage) {
 			dotCurrentPath = [NSString stringWithFormat:@"%@/Bundles/com.magicdots.images/Dot_CurrentSB.png", themePath];
 			currentPageDotImage = [UIImage imageWithContentsOfFile:dotCurrentPath];
 
@@ -65,7 +66,7 @@ static void loadPageDotImages(){
 		}
 
 #if LegacyMagicDotsSupport
-		if (!pageDotImage){
+		if (!pageDotImage) {
 			dotPath = [NSString stringWithFormat:@"%@/Bundles/com.magicdots.images/Dot_PagesSB.png", themePath];
 			pageDotImage = [UIImage imageWithContentsOfFile:dotPath];
 
@@ -225,5 +226,6 @@ static void loadPageDotImages(){
 	if (!%c(ANEMSettingsManager)) {
 		dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib",RTLD_LAZY);
 	}
+
 	[[%c(ANEMSettingsManager) sharedManager] addEventHandler:[AnemonePageDotsEventHandler new]];
 }

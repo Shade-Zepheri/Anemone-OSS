@@ -1,6 +1,6 @@
 #import "ANEMSettingsManager.h"
 
-#pragma clang diagnostic push 
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wambiguous-macro"
 #if TARGET_IPHONE_SIMULATOR
 #define HOMEDIR NSHomeDirectory()
@@ -13,6 +13,7 @@
 %hook UIApplication
 - (void)applicationDidResume {
 	%orig;
+
 	NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:optiThemeTouchFilePath error:nil];
 	NSDate *date = [attributes fileModificationDate];
 	if ([date timeIntervalSinceDate:[[ANEMSettingsManager sharedManager] optiThemeReloadDate]] > 0){

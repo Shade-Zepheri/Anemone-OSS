@@ -21,20 +21,22 @@ CGImageRef *newCGImageSourceCreateWithFile(NSString *path, NSDictionary *options
 		}
 		path = themedPath;
 	}
+
 	return oldCGImageSourceCreateWithFile(path, options);
 }
 
 CGImageRef *newCGImageSourceCreateWithURL(NSURL *url, NSDictionary *options) {
 	if ([[ANEMSettingsManager sharedManager] isCGImageHookEnabled]) {
-		if ([url isFileURL]) {
-			url = [NSURL fileURLWithPath:[[url path] anemoneThemedPath]];
+		if (url.fileURL) {
+			url = [NSURL fileURLWithPath:[url.path anemoneThemedPath]];
 		}
 		if ([[ANEMSettingsManager sharedManager] onlyLoadThemedCGImages]) {
-			if (![[url absoluteString] hasPrefix:@"file:///Library/Themes"] && ![[url absoluteString] hasPrefix:@"file:///var/stash/anemonecache"] && ![[url absoluteString] hasPrefix:@"file:///System/Library/PreferenceBundles/VPNPreferences.bundle/"]) {
+			if (![url.absoluteString hasPrefix:@"file:///Library/Themes"] && ![url.absoluteString hasPrefix:@"file:///var/stash/anemonecache"] && ![url.absoluteString hasPrefix:@"file:///System/Library/PreferenceBundles/VPNPreferences.bundle/"]) {
 				return nil;
 			}
 		}
 	}
+
 	return oldCGImageSourceCreateWithURL(url, options);
 }
 
@@ -43,13 +45,13 @@ CGImageRef *newCGImageSourceCreateWithURL(NSURL *url, NSDictionary *options) {
 		return;
 	}
 
-	#ifdef NO_SUBSTRATE
-			rebind_symbols((struct rebinding[2]){
-				{"CGImageSourceCreateWithFile", (void *)newCGImageSourceCreateWithFile, (void **)&oldCGImageSourceCreateWithFile},
-				{"CGImageSourceCreateWithURL", (void *)newCGImageSourceCreateWithURL, (void **)&oldCGImageSourceCreateWithURL}
-			},2);
-	#else
-			MSHookFunction((void *)&CGImageSourceCreateWithFile, (void **)&newCGImageSourceCreateWithFile, (void **)&oldCGImageSourceCreateWithFile);
-			MSHookFunction((void *)&CGImageSourceCreateWithURL, (void **)&newCGImageSourceCreateWithURL, (void **)&oldCGImageSourceCreateWithURL);
-	#endif
+#ifdef NO_SUBSTRATE
+	rebind_symbols((struct rebinding[2]){
+		{"CGImageSourceCreateWithFile", (void *)newCGImageSourceCreateWithFile, (void **)&oldCGImageSourceCreateWithFile},
+		{"CGImageSourceCreateWithURL", (void *)newCGImageSourceCreateWithURL, (void **)&oldCGImageSourceCreateWithURL}
+	},2);
+#else
+	MSHookFunction((void *)&CGImageSourceCreateWithFile, (void **)&newCGImageSourceCreateWithFile, (void **)&oldCGImageSourceCreateWithFile);
+	MSHookFunction((void *)&CGImageSourceCreateWithURL, (void **)&newCGImageSourceCreateWithURL, (void **)&oldCGImageSourceCreateWithURL);
+#endif
 }

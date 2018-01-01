@@ -119,7 +119,7 @@
 
 - (void)addEventHandler:(NSObject<AnemoneEventHandler> *)handler {
 	if (!_eventHandlers) {
-		_eventHandlers = [[NSMutableArray alloc] init];
+		_eventHandlers = [NSMutableArray array];
 	}
 
 	[_eventHandlers addObject:handler];
@@ -129,20 +129,21 @@
 	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
 		return nil;
 	}
+
 	if (!_themeSettings) {
 		NSDictionary *settingsPlist = [NSDictionary dictionaryWithContentsOfFile:preferenceFilePath];
 		NSMutableArray *rawthemes = [NSMutableArray arrayWithContentsOfFile:preferenceOrderingFilePath];
 		NSMutableArray *themes = nil;
-		if (rawthemes){
+		if (rawthemes) {
 			themes = [NSMutableArray array];
-			for (NSString *theme in rawthemes){
+			for (NSString *theme in rawthemes) {
 				[themes addObject:[[theme componentsSeparatedByString:@".theme"] objectAtIndex:0]];
 			}
 		}
 		if (!themes) {
 			themes = (NSMutableArray *)[settingsPlist allKeys];
 		}
-		NSMutableArray *themeSettings = [[NSMutableArray alloc] init];
+		NSMutableArray *themeSettings = [NSMutableArray array];
 		for (NSString *themeName in themes) {
 			BOOL activeTheme = [[[settingsPlist objectForKey:themeName] objectForKey:@"Enabled"] boolValue];
 			if (activeTheme) {

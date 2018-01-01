@@ -48,22 +48,38 @@
 @interface AnemoneNoRespringServer : NSObject {
 	CPDistributedMessagingCenter *_server;
 }
+
++ (instancetype)defaultReloadServer;
+
 @end
 
 @implementation AnemoneNoRespringServer
+
++ (instancetype)defaultReloadServer {
+	static AnemoneNoRespringServer *sharedInstance = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		sharedInstance = [[self alloc] init];
+	});
+	return sharedInstance;
+}
+
 - (instancetype)init {
 	dlopen("/Library/MobileSubstrate/DynamicLibraries/AnemoneCore.dylib", RTLD_NOW);
 	self = [super init];
-	_server = [%c(CPDistributedMessagingCenter) centerNamed:@"com.anemonetheming.anemone.springboard"];
-	rocketbootstrap_distributedmessagingcenter_apply(_server);
-	[_server runServerOnCurrentThread];
-	[_server registerForMessageName:@"forceReloadNow" target:self selector:@selector(forceReloadNow)];
-	[_server registerForMessageName:@"ping" target:self selector:@selector(ping)];
+	if (self) {
+		_server = [%c(CPDistributedMessagingCenter) centerNamed:@"com.anemonetheming.anemone.springboard"];
+		rocketbootstrap_distributedmessagingcenter_apply(_server);
+		[_server runServerOnCurrentThread];
+		[_server registerForMessageName:@"forceReloadNow" target:self selector:@selector(forceReloadNow)];
+		[_server registerForMessageName:@"ping" target:self selector:@selector(ping)];
+	}
+
 	return self;
 }
 
 - (NSDictionary *)ping {
-	return [NSDictionary dictionaryWithObjectsAndKeys:@YES,@"pong",nil];
+	return @{@"pong" : @YES};
 }
 
 - (void)forceReloadNow {
@@ -82,9 +98,10 @@
 	//[[rootFolderController contentView] resetIconListViews]; // Fallback, but slow
 	SBRootFolderView *rootFolderView = [rootFolderController contentView];
 	SBIconListView *dockListView = [rootFolderView valueForKey:@"_dockListView"];
-	for (SBIconView *iconView in [dockListView subviews]){
-		if ([iconView respondsToSelector:@selector(prepareForReuse)])
+	for (SBIconView *iconView in [dockListView subviews]) {
+		if ([iconView respondsToSelector:@selector(prepareForReuse)]) {
 			[iconView prepareForReuse];
+		}
 	}
 	[dockListView showAllIcons];
 
@@ -101,17 +118,19 @@
 	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
 		if (currentPageIndex < listViewCount-1) {
 			SBIconListView *iconListView = [iconLists objectAtIndex:currentPageIndex+1];
-			for (SBIconView *iconView in [iconListView subviews]){
-				if ([iconView respondsToSelector:@selector(prepareForReuse)])
+			for (SBIconView *iconView in [iconListView subviews]) {
+				if ([iconView respondsToSelector:@selector(prepareForReuse)]) {
 					[iconView prepareForReuse];
+				}
 			}
 			[iconListView showAllIcons];
 		}
 		if (currentPageIndex > 0) {
 			SBIconListView *iconListView = [iconLists objectAtIndex:currentPageIndex-1];
 			for (SBIconView *iconView in [iconListView subviews]){
-				if ([iconView respondsToSelector:@selector(prepareForReuse)])
+				if ([iconView respondsToSelector:@selector(prepareForReuse)]) {
 					[iconView prepareForReuse];
+				}
 			}
 			[iconListView showAllIcons];
 		}
@@ -122,17 +141,15 @@
 }
 @end
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-value"
-%hook SpringBoard
--(instancetype)init {
+static inline void initializeTweak(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
 	if (kCFCoreFoundationVersionNumber > MaxSupportedCFVersion) {
-		return %orig;
+		return;
 	}
-	self = %orig;
+
 	dlopen("/System/Library/PrivateFrameworks/AppSupport.framework/AppSupport", RTLD_NOW);
-	[[AnemoneNoRespringServer alloc] init];
-	return self;
+	[AnemoneNoRespringServer defaultReloadServer];
 }
-%end
-#pragma clang diagnostic pop
+
+%ctor {
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, &initializeTweak, CFSTR("SBSpringBoardDidLaunchNotification"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+}

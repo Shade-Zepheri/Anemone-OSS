@@ -1,14 +1,17 @@
 @interface LSResourceProxy : NSObject
-- (NSDictionary *)iconsDictionary;
+@property (nonatomic,readonly) NSDictionary *iconsDictionary;
 @end
 
 @interface LSApplicationProxy : LSResourceProxy
 @property (nonatomic, retain) NSString *applicationIdentifier;
 @property (nonatomic, retain) NSString *localizedName;
+@property (nonatomic,readonly) NSURL * bundleURL;
+@property (nonatomic,readonly) BOOL iconIsPrerendered;
+
 + (LSApplicationProxy *)applicationProxyForIdentifier:(NSString *)identifier;
-- (NSURL *)bundleURL;
+
 - (id)_plistValueForKey:(NSString *)key;
-- (BOOL)iconIsPrerendered;
+
 @end
 
 @interface LSApplicationWorkspace : NSObject

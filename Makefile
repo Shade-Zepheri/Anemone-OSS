@@ -7,7 +7,6 @@ include $(THEOS)/makefiles/common.mk
 TWEAK_NAME = Anemone
 Anemone_FILES = $(wildcard *.xm)
 Anemone_FRAMEWORKS = UIKit CoreGraphics QuartzCore
-Anemone_PRIVATE_FRAMEWORKS = AppSupport
 ifeq ($(NO_OPTITHEME),1)
 	Anemone_CFLAGS += -DNO_OPTITHEME
 endif
